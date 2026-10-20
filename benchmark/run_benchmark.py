@@ -209,14 +209,15 @@ async def run_benchmark(num_trials: int = 50) -> Dict[str, Any]:
     }
 
     # Save outputs
-    output_dir = Path("d:/AI-Lab/Hackathon/aws AI Agent challenge/benchmark")
+    project_root = Path(__file__).resolve().parent.parent
+    output_dir = project_root / "benchmark"
     output_dir.mkdir(parents=True, exist_ok=True)
     json_path = output_dir / "benchmark_results.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
     # Generate Markdown Report
-    report_path = Path("d:/AI-Lab/Hackathon/aws AI Agent challenge/docs/benchmark_results.md")
+    report_path = project_root / "docs" / "benchmark_results.md"
     report_md = generate_markdown_report(results)
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_md)
