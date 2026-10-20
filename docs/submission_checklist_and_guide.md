@@ -148,13 +148,25 @@ The package includes typed question generators, asynchronous HTTP client with fa
 ```text
 https://github.com/farhanmallik05/vigil-aws
 ```
-*(Ensure your repo is set to Public on GitHub)*
+*(Public repository containing all source code, tests, and diagrams)*
 
-### Field 10: Demo Video Link
+### Field 10: Endpoint or Live Demo
+```text
+https://farhanmallik05.github.io/vigil-aws/
+```
+*(Interactive Cyber-SRE Mission Control dashboard hosted live on GitHub Pages with 4 GameDay scenarios, model router, audio synthesizer, and architecture visualizer)*
+
+### Field 11: Jupyter or SageMaker Notebook
+```text
+https://github.com/farhanmallik05/vigil-aws/blob/main/notebooks/vigil_aws_walkthrough.ipynb
+```
+*(End-to-end interactive walkthrough notebook covering Decider 2B grounding, calibration, and Bedrock RCA)*
+
+### Field 12: Demo Video Link (Optional / Recommended)
 ```text
 https://youtu.be/<YOUR_VIDEO_ID>
 ```
-*(Ensure video duration is strictly under 3 minutes: e.g., 2m 45s)*
+*(Storyboarded 2m 45s demo script available in docs/video_demo_script.md)*
 
 ---
 

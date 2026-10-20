@@ -3,6 +3,8 @@
 
 [![Hackathon](https://img.shields.io/badge/AWS%20Hackathon-Agent%20Experience-FF9900?logo=amazon-aws&logoColor=white)](https://builder.aws.com/build/hackathons/4f50957c-1d08-37ab-b11c-97516b9adeb4/agent-experience-hackathon)
 [![Model](https://img.shields.io/badge/Model-Strands%20Decider%202B-10B981)](https://strandsagents.com/blog/introducing-strands-decider/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Cyber--SRE%20Mission%20Control-00F2FE?logo=github-pages&logoColor=white)](https://farhanmallik05.github.io/vigil-aws/)
+[![Walkthrough Notebook](https://img.shields.io/badge/Jupyter-Walkthrough%20Notebook-F37626?logo=jupyter&logoColor=white)](notebooks/vigil_aws_walkthrough.ipynb)
 [![Tag](https://img.shields.io/badge/Pattern-%23guardrails-blue)](#)
 [![Tag](https://img.shields.io/badge/Pattern-%23model--routing-indigo)](#)
 [![Tag](https://img.shields.io/badge/Tag-%23strands--decider--2b-purple)](#)

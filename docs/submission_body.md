@@ -114,7 +114,8 @@ agent = Agent(
 ## 6. Live Demos, Repository & Deliverables
 
 - **Public GitHub Repository:** [https://github.com/farhanmallik05/vigil-aws](https://github.com/farhanmallik05/vigil-aws)
-- **Demo Video (2m 45s):** [https://youtu.be/<YOUR_VIDEO_ID>](https://youtu.be/<YOUR_VIDEO_ID>)
-- **Builder Center Written Article:** [docs/builder_center_article.md](docs/builder_center_article.md)
-- **Interactive Cyber-SRE Mission Control HUD:** Run locally with `python src/web_dashboard.py` at `http://localhost:8501`.
+- **Hosted Live Demo / Endpoint:** [https://farhanmallik05.github.io/vigil-aws/](https://farhanmallik05.github.io/vigil-aws/)
+- **Interactive Walkthrough Notebook:** [notebooks/vigil_aws_walkthrough.ipynb](https://github.com/farhanmallik05/vigil-aws/blob/main/notebooks/vigil_aws_walkthrough.ipynb)
+- **Builder Center Written Article:** [docs/builder_center_article.md](https://github.com/farhanmallik05/vigil-aws/blob/main/docs/builder_center_article.md)
+- **Demo Video Script & Storyboard:** [docs/video_demo_script.md](https://github.com/farhanmallik05/vigil-aws/blob/main/docs/video_demo_script.md)
 - **Automated Test Suite:** 39/39 passing unit and end-to-end integration tests (`python -m pytest tests/ -v`).
