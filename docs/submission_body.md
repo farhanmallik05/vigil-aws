@@ -6,6 +6,10 @@
 
 ---
 
+![Vigil-AWS Dual-Speed Cognitive Architecture](vigil_aws_submission_hero.jpg)
+
+---
+
 ## 1. Project Summary
 
 Autonomous AI agents are transforming cloud operations and site reliability engineering (SRE). However, granting frontier LLMs write and delete access to production AWS infrastructure (`boto3.client('ec2').terminate_instances()`, `dynamodb.delete_table()`, or modifying VPC Security Groups) introduces catastrophic operational risks:

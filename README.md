@@ -13,6 +13,10 @@
 
 ---
 
+![Vigil-AWS Dual-Speed Cognitive Architecture Hero Banner](docs/vigil_aws_submission_hero.jpg)
+
+---
+
 ## Overview
 
 **Vigil-AWS** is an autonomous AWS Incident & Chaos Remediation Commander engineered with a **Dual-Speed Cognitive Architecture**:

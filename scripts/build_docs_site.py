@@ -33,6 +33,11 @@ def main():
         <a href="https://github.com/farhanmallik05/vigil-aws/blob/main/docs/builder_center_article.md" target="_blank" style="color: #F59E0B; text-decoration: none; font-weight: 600;">📄 Submission Article</a>
       </div>
     </div>
+
+    <!-- Hero Image Showcase -->
+    <div style="margin-bottom: 24px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(0, 242, 254, 0.25); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);">
+      <img src="vigil_aws_submission_hero.jpg" alt="Vigil-AWS Dual-Speed Cognitive Architecture Hero" style="width: 100%; display: block; object-fit: cover;">
+    </div>
 """
 
     html = html.replace('<div class="wrapper">', '<div class="wrapper">' + nav_banner, 1)
