@@ -1,6 +1,6 @@
 # Sub-Second Safety: How We Built a 115ms Blast-Radius Guardrail for Autonomous AWS Bedrock Agents Using Strands Decider 2B
 
-**Tags:** `#strands-decider-2b` `#guardrails`
+**Tags:** `#strands-decider-2b` `#guardrails` `#model-routing`
 
 ---
 
@@ -33,9 +33,15 @@ To solve this, we built **Vigil-AWS**, an autonomous Cloud Incident & Remediatio
 
 ## 3. System Architecture & The Decisions Handed to Decider 2B
 
+![Vigil-AWS Architecture Diagram](architecture_diagram.svg)
+
 Vigil-AWS utilizes the **Strands Agents SDK** (`strands-agents`) and its lifecycle intervention hook: `InterventionHandler.before_tool_call()`.
 
 Whenever the Bedrock agent decides to invoke an operational tool, the tool execution is temporarily suspended while our custom `DeciderGroundedGuardrail` queries Decider 2B.
+
+### The 4-Way Reflex Decision State Machine
+
+![DeciderGuard State Machine](decision_state_machine.svg)
 
 ```mermaid
 sequenceDiagram

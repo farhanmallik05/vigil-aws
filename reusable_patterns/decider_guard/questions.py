@@ -130,3 +130,17 @@ class DeciderEvaluationResult:
             and self.blast_radius != BlastRadiusCategory.DESTRUCTIVE_IRREVERSIBLE
             and self.is_adversarial_score < 0.25
         )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Converts the evaluation result into a JSON-serializable dictionary."""
+        return {
+            "grounding_score": self.grounding_score,
+            "blast_radius": self.blast_radius.value if hasattr(self.blast_radius, "value") else str(self.blast_radius),
+            "blast_radius_confidence": self.blast_radius_confidence,
+            "is_adversarial_score": self.is_adversarial_score,
+            "latency_ms": self.latency_ms,
+            "is_simulated": self.is_simulated,
+            "is_safe_and_grounded": self.is_safe_and_grounded,
+            "raw_response": self.raw_response,
+        }
+

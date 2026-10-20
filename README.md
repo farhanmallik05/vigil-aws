@@ -4,8 +4,9 @@
 [![Hackathon](https://img.shields.io/badge/AWS%20Hackathon-Agent%20Experience-FF9900?logo=amazon-aws&logoColor=white)](https://builder.aws.com/build/hackathons/4f50957c-1d08-37ab-b11c-97516b9adeb4/agent-experience-hackathon)
 [![Model](https://img.shields.io/badge/Model-Strands%20Decider%202B-10B981)](https://strandsagents.com/blog/introducing-strands-decider/)
 [![Tag](https://img.shields.io/badge/Pattern-%23guardrails-blue)](#)
+[![Tag](https://img.shields.io/badge/Pattern-%23model--routing-indigo)](#)
 [![Tag](https://img.shields.io/badge/Tag-%23strands--decider--2b-purple)](#)
-[![Tests](https://img.shields.io/badge/Tests-24%2F24%20Passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-39%2F39%20Passing-brightgreen)](tests/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
@@ -18,42 +19,13 @@
 
 ---
 
-## Key Highlights
+## Architecture & State Machine
 
-- **17.96x Faster Inline Guardrails:** Evaluates safety and intent grounding in **118.03 ms** median latency compared to 2,119.78 ms for LLM self-reflection.
-- **100% Cost Savings on Safety Decisions:** Runs locally on CPU/Graviton at **$0 token cost** for repeated operational decisions.
-- **Calibrated Reliability:** Utilizes Decider 2B's mathematically calibrated confidence probabilities (ECE < 0.02) to dynamically trigger `Proceed()`, `Confirm()` (Human-in-the-Loop), `Deny()`, or `Guide()`.
-- **Multimodal Architecture Guardrail:** Uses Decider 2B's native vision tower to verify actions against CloudWatch dashboard graphs and network topology diagrams.
-- **Dual-Pattern Synergy (Model Routing):** Dynamically routes simple alerts to Bedrock Claude 3.5 Haiku and complex cascading outages to Bedrock Claude 3.5 Sonnet.
-- **Reusable Strands Asset:** Includes `decider_guard`, a drop-in package installable via `pip install .` for the Strands Agents SDK (`strands-agents`).
+![Vigil-AWS Dual-Speed Architecture](docs/architecture_diagram.svg)
 
----
+### Reflex Decision State Machine
 
-## Architecture
-
-```mermaid
-flowchart TD
-    Alarm["CloudWatch Alarm / Operator Prompt"] --> Agent["Strands Bedrock Agent (System 2)"]
-    Agent --> ToolCall["Proposes Tool Call (e.g. restart_service)"]
-    ToolCall --> Guardrail["DeciderGroundedGuardrail (InterventionHandler)"]
-    
-    subgraph "Strands Decider 2B (System 1 ~115ms)"
-        Guardrail --> Q1["Question 1 (noul): Grounding Check"]
-        Guardrail --> Q2["Question 2 (choice): Blast-Radius [harmless, safe, destructive]"]
-        Guardrail --> Q3["Question 3 (noul): Injection Check"]
-        Q1 --> Decider["Decider 2B Engine"]
-        Q2 --> Decider
-        Q3 --> Decider
-    end
-
-    Decider --> Logic{"Gating Logic"}
-    Logic -- "Grounded & Safe (Conf >= 0.88)" --> Exec["Proceed() -> Execute AWS Boto3 Tool"]
-    Logic -- "Moderate Risk (0.70 <= Conf < 0.88)" --> HITL["Confirm() -> Operator Sign-off"]
-    Logic -- "Ungrounded / Destructive" --> Block["Deny() -> Abort & Guide Agent"]
-
-    Exec --> Cloud["AWS Cloud Infrastructure"]
-    Cloud --> BedrockSummary["Amazon Bedrock Synthesis (RCA & Post-Mortem)"]
-```
+![DeciderGuard State Machine](docs/decision_state_machine.svg)
 
 ---
 
@@ -126,7 +98,7 @@ python -m pytest tests/ -v
 
 ```text
 ├── .github/workflows/
-│   └── ci.yml                      # Automated CI testing workflow
+│   └── ci.yml                      # Automated CI testing workflow (39 tests)
 ├── benchmark/
 │   ├── benchmark_results.json      # Hard data from 50 operational decision trials
 │   ├── run_benchmark.py            # Latency and cost benchmarking harness
@@ -135,6 +107,8 @@ python -m pytest tests/ -v
 ├── docs/
 │   ├── implementation_plan.md      # Detailed hackathon execution plan
 │   ├── tasks.md                    # Milestone & task checklist
+│   ├── architecture_diagram.svg    # High-res dual-speed architecture diagram
+│   ├── decision_state_machine.svg  # High-res 4-way reflex state machine diagram
 │   ├── benchmark_chart.svg         # High-resolution benchmark vector graphic
 │   ├── benchmark_results.md        # Empirical latency and cost report
 │   ├── builder_center_article.md   # Written article for AWS Builder Center
@@ -152,12 +126,15 @@ python -m pytest tests/ -v
 │   ├── agent.py                    # Vigil-AWS Agent implementation
 │   ├── chaos_simulator.py          # Simulated GameDay chaos incidents
 │   ├── demo_hud.py                 # Real-time interactive terminal HUD
-│   ├── web_dashboard.py            # Reactive dark-mode web application HUD
+│   ├── web_dashboard.py            # Reactive Python HTTP server & REST API
+│   ├── dashboard_template.html     # Cyber-SRE Mission Control Glassmorphism UI
 │   └── tools/
 │       └── aws_remediation.py      # Safe & destructive AWS remediation tools
 ├── tests/
+│   ├── test_calibration.py         # ECE, Brier score, CloudWatch EMF tests
 │   ├── test_decider_guard.py       # Core guardrail pytest suite
-│   └── test_extended_capabilities.py # Vision and model router pytest suite
+│   ├── test_extended_capabilities.py # Vision and model router pytest suite
+│   └── test_web_dashboard.py       # End-to-end HTTP and UI integration suite
 ├── pyproject.toml                  # Python package configuration
 ├── requirements.txt
 └── README.md
@@ -169,6 +146,7 @@ python -m pytest tests/ -v
 
 - **Event:** AWS Agent Experience Hackathon
 - **Required Tag:** `#strands-decider-2b`
-- **Pattern Tag:** `#guardrails`
+- **Pattern Tags:** `#guardrails`, `#model-routing`
 - **Article:** [AWS Builder Center Submission Article](docs/builder_center_article.md)
 - **Demo Video Script:** [Link to Demo Video Storyboard](docs/video_demo_script.md)
+

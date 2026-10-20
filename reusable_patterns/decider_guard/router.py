@@ -76,5 +76,6 @@ class DeciderModelRouter:
             "is_complex": is_complex,
             "routing_latency_ms": result.latency_ms,
             "estimated_cost_savings_pct": 0.0 if is_complex else 80.0,
-            "raw_result": result,
+            "raw_result": result.to_dict(),
         }
+

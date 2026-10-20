@@ -37,3 +37,29 @@
 - [x] Finalize the Video Recording Script & Storyboard (`docs/video_demo_script.md`) <!-- id: 4.3 -->
 - [x] Add production `requirements.txt` and Apache 2.0 `LICENSE` <!-- id: 4.4 -->
 - [x] Audit Gate 1 & Gate 2 Submission criteria against hackathon rules <!-- id: 4.5 -->
+
+## Phase 5: Extended Capabilities & Enterprise Reliability [COMPLETED]
+- [x] Mathematical confidence calibration engine (`reusable_patterns/decider_guard/calibration.py`): ECE, MCE, Brier score, Temperature scaling, ASCII Reliability Diagrams <!-- id: 5.1 -->
+- [x] AWS CloudWatch Embedded Metrics (EMF) structured logging for real-time telemetry <!-- id: 5.2 -->
+- [x] Multimodal Vision Guardrail (`reusable_patterns/decider_guard/vision_guard.py`): Decider 2B Vision Tower diagram/topology grounding <!-- id: 5.3 -->
+- [x] Dynamic Incident Model Router (`reusable_patterns/decider_guard/router.py`): Haiku 3.5 vs Claude 3.5 Sonnet routing (`#model-routing`) <!-- id: 5.4 -->
+- [x] Comprehensive packaging: `pyproject.toml` and GitHub Actions CI workflow (`.github/workflows/ci.yml`) <!-- id: 5.5 -->
+
+## Phase 6: Recursive Refinement & Verification (Loops 1–3) [COMPLETED]
+- [x] **Loop 1 — Robustness & API Hardening:**
+  - [x] Identified and fixed JSON serialization bug in `router.py` (`DeciderEvaluationResult.to_dict()`)
+  - [x] Implemented thread-safe persistent async event loop runner (`run_async`) in `src/web_dashboard.py`
+  - [x] Implemented 7 full REST API endpoints (`/api/scenarios`, `/api/run_scenario`, `/api/metrics`, `/api/evaluate_custom`, `/api/route_model`, `/api/evaluate_vision`, `/api/reset_metrics`)
+  - [x] Automated integration test suite `tests/test_web_dashboard.py` (all tests passing)
+- [x] **Loop 2 — Cyber-SRE Mission Control UI & Soundscape:**
+  - [x] Created `src/dashboard_template.html` (Cyber-SRE Glassmorphic aesthetic, 6 interactive tabs)
+  - [x] Integrated Web Audio API tactile feedback (chimes, sonar pings, alert buzzers, sweeps)
+  - [x] Built interactive canvas constellation background with real-time particle physics
+  - [x] Built interactive ROI cost-savings radar with real-time dollar impact calculator
+- [x] **Loop 3 — Advanced Graphics, State Machine & Complete Reverification:**
+  - [x] Created vector SVG architecture diagram (`docs/architecture_diagram.svg`)
+  - [x] Created vector SVG 4-way reflex state machine diagram (`docs/decision_state_machine.svg`)
+  - [x] Added SVG serving routes in `web_dashboard.py` and automated tests in `test_web_dashboard.py`
+  - [x] Embedded all graphics and `#model-routing` tags into `README.md`, `builder_center_article.md`, and `video_demo_script.md`
+  - [x] Full test suite reverification: **39/39 passing** with zero errors or warnings
+
