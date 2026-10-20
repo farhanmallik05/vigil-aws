@@ -144,9 +144,12 @@ python -m pytest tests/ -v
 
 ## Hackathon Submission Details
 
-- **Event:** AWS Agent Experience Hackathon
+- **Event:** [AWS Agent Experience Hackathon: Strands Decider](https://builder.aws.com/build/hackathons/4f50957c-1d08-37ab-b11c-97516b9adeb4/agent-experience-hackathon-strands-decider)
+- **Deadline:** October 23, 2026 at 11:59 PM PDT
 - **Required Tag:** `#strands-decider-2b`
 - **Pattern Tags:** `#guardrails`, `#model-routing`
+- **Submission Checklist & Guide:** [docs/submission_checklist_and_guide.md](docs/submission_checklist_and_guide.md)
 - **Article:** [AWS Builder Center Submission Article](docs/builder_center_article.md)
 - **Demo Video Script:** [Link to Demo Video Storyboard](docs/video_demo_script.md)
+
 
