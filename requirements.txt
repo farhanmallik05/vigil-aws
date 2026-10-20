@@ -1,0 +1,23 @@
+# Vigil-AWS Dependencies
+# AWS Agent Experience Hackathon
+
+# Core Strands Agents SDK & Decider 2B
+strands-agents>=1.59.0
+strands-decider>=0.2.0
+
+# AWS & Cloud SDKs
+boto3>=1.35.0
+botocore>=1.35.0
+
+# Asynchronous HTTP & Networking
+httpx>=0.27.0
+
+# Schema & Data Validation
+pydantic>=2.9.0
+
+# Terminal UI & Visualization
+rich>=13.8.0
+
+# Testing & Quality Assurance
+pytest>=8.3.0
+pytest-asyncio>=0.24.0

@@ -1,0 +1,46 @@
+{
+  "num_trials": 50,
+  "metrics": {
+    "strands_decider_2b": {
+      "latency_ms": {
+        "min": 105.16,
+        "mean": 115.87,
+        "p50": 118.03,
+        "p90": 123.1,
+        "p95": 124.17,
+        "p99": 124.88,
+        "max": 124.88
+      },
+      "cost_per_1000_decisions_usd": 0.0,
+      "hardware": "Local CPU / Graviton (0 GPU required)"
+    },
+    "bedrock_claude_3_5_sonnet": {
+      "latency_ms": {
+        "min": 1750.0,
+        "mean": 2130.11,
+        "p50": 2119.78,
+        "p90": 2377.88,
+        "p95": 2465.18,
+        "p99": 2649.47,
+        "max": 2649.47
+      },
+      "cost_per_1000_decisions_usd": 4.2,
+      "hardware": "AWS Bedrock Cloud API"
+    },
+    "bedrock_claude_3_5_haiku": {
+      "latency_ms": {
+        "min": 680.0,
+        "mean": 888.67,
+        "p50": 910.23,
+        "p90": 1005.02,
+        "p95": 1028.41,
+        "p99": 1082.61,
+        "max": 1082.61
+      },
+      "cost_per_1000_decisions_usd": 1.4,
+      "hardware": "AWS Bedrock Cloud API"
+    }
+  },
+  "speedup_factor_vs_sonnet": 17.96,
+  "cost_savings_pct": 100.0
+}
