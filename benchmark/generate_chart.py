@@ -1,6 +1,6 @@
-"""Generates high-resolution vector SVG and interactive HTML charts for Vigil-AWS benchmarks.
+"""Generates high-resolution vector SVG and interactive HTML charts for Vigil-AWS benchmarks in Light Mode.
 
-Visualizes the 17.96x latency speedup and 100% decision cost reduction achieved by
+Visualizes the 18.33x latency speedup and 100% decision cost reduction achieved by
 pairing Strands Decider 2B with Amazon Bedrock Claude 3.5 Sonnet.
 """
 
@@ -12,120 +12,124 @@ BENCHMARK_DIR = PROJECT_ROOT / "benchmark"
 
 
 def generate_svg_chart() -> str:
-    """Generates a modern, dark-mode SVG vector chart."""
+    """Generates an enterprise-grade Light Mode SVG vector chart."""
     svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 460" width="100%" height="100%">
   <defs>
+    <!-- Light Mode Gradients -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#080C14" />
-      <stop offset="100%" stop-color="#0F172A" />
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F8FAFC" />
     </linearGradient>
-    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#00D2FF" />
-      <stop offset="100%" stop-color="#00F2FE" />
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#10B981" />
     </linearGradient>
     <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="0%" stop-color="#7C3AED" />
       <stop offset="100%" stop-color="#8B5CF6" />
     </linearGradient>
     <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FF9900" />
-      <stop offset="100%" stop-color="#FFB84D" />
+      <stop offset="0%" stop-color="#EA580C" />
+      <stop offset="100%" stop-color="#F97316" />
     </linearGradient>
-    <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#00F2FE" flood-opacity="0.45" />
+
+    <!-- Light Drop Shadows -->
+    <filter id="lightCardShadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.06" />
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#0F172A" flood-opacity="0.04" />
     </filter>
-    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.5" />
+    <filter id="greenPillGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#10B981" flood-opacity="0.25" />
     </filter>
   </defs>
 
   <style>
-    .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; font-size: 20px; fill: #FFFFFF; letter-spacing: -0.5px; }
-    .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 400; font-size: 13px; fill: #94A3B8; }
-    .card-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; font-size: 14px; fill: #F1F5F9; letter-spacing: 0.5px; text-transform: uppercase; }
-    .label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 600; font-size: 13px; fill: #E2E8F0; }
-    .value { font-family: "SF Mono", Consolas, Monaco, monospace; font-weight: 700; font-size: 13px; fill: #FFFFFF; }
-    .badge { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; font-size: 11px; fill: #00F2FE; }
+    .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; font-size: 20px; fill: #0F172A; letter-spacing: -0.5px; }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 400; font-size: 13px; fill: #475569; }
+    .card-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; font-size: 14px; fill: #0F172A; letter-spacing: 0.5px; text-transform: uppercase; }
+    .label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 600; font-size: 13px; fill: #1E293B; }
+    .value { font-family: "SF Mono", Consolas, Monaco, monospace; font-weight: 700; font-size: 13px; fill: #0F172A; }
+    .badge { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; font-size: 11px; fill: #065F46; }
     .desc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 400; font-size: 12px; fill: #64748B; }
   </style>
 
-  <!-- Background -->
-  <rect width="880" height="460" rx="16" fill="url(#bgGrad)" stroke="#1E293B" stroke-width="1.5" />
+  <!-- Clean Canvas Background -->
+  <rect width="880" height="460" rx="16" fill="url(#bgGrad)" stroke="#CBD5E1" stroke-width="1.5" />
 
   <!-- Header -->
   <g transform="translate(36, 40)">
     <text class="title" x="0" y="0">VIGIL-AWS: SYSTEM-1 VS SYSTEM-2 BENCHMARK</text>
     <text class="subtitle" x="0" y="22">Empirical Decision Latency &amp; Marginal Cost Comparison (N=50 Incident Workload)</text>
-    <!-- Tag -->
-    <rect x="680" y="-18" width="130" height="26" rx="13" fill="#132338" stroke="#00F2FE" stroke-opacity="0.4" />
-    <text class="badge" x="745" y="-1" text-anchor="middle">17.96x FASTER</text>
+    <!-- Speedup Tag -->
+    <rect x="680" y="-18" width="134" height="26" rx="13" fill="#ECFDF5" stroke="#A7F3D0" />
+    <text class="badge" x="747" y="-1" text-anchor="middle">18.33x FASTER</text>
   </g>
 
   <!-- Left Card: Latency -->
-  <g transform="translate(36, 92)" filter="url(#cardShadow)">
-    <rect width="384" height="328" rx="12" fill="#0D1526" stroke="#1E293B" stroke-width="1" />
+  <g transform="translate(36, 92)" filter="url(#lightCardShadow)">
+    <rect width="384" height="328" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" />
     <text class="card-title" x="24" y="34">Decision Latency (ms)</text>
     <text class="desc" x="24" y="52">Lower is better • Sub-second reflex threshold</text>
 
     <!-- Strands Decider 2B -->
     <g transform="translate(24, 85)">
       <text class="label" x="0" y="0">Strands Decider 2B (Local CPU)</text>
-      <text class="value" x="336" y="0" text-anchor="end" fill="#00F2FE">118 ms</text>
-      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
-      <!-- 118 / 2119 = 5.5% -> min display 28px -->
-      <rect x="0" y="10" width="32" height="20" rx="6" fill="url(#cyanGrad)" filter="url(#glowCyan)" />
-      <text class="desc" x="42" y="25" fill="#00F2FE" font-weight="700">118ms (Fast Path)</text>
+      <text class="value" x="336" y="0" text-anchor="end" fill="#047857">118 ms</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#F1F5F9" />
+      <!-- 118 / 2165 = 5.4% -> 28px width -->
+      <rect x="0" y="10" width="30" height="20" rx="6" fill="url(#greenGrad)" filter="url(#greenPillGlow)" />
+      <text class="desc" x="40" y="25" fill="#047857" font-weight="700">118ms (Fast Path)</text>
     </g>
 
     <!-- Bedrock Claude 3.5 Haiku -->
     <g transform="translate(24, 160)">
       <text class="label" x="0" y="0">Bedrock Claude 3.5 Haiku</text>
-      <text class="value" x="336" y="0" text-anchor="end">720 ms</text>
-      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
-      <!-- 720 / 2119 = 34% -> 114px -->
-      <rect x="0" y="10" width="114" height="20" rx="6" fill="url(#orangeGrad)" opacity="0.85" />
+      <text class="value" x="336" y="0" text-anchor="end">906 ms</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#F1F5F9" />
+      <!-- 906 / 2165 = 41.8% -> 140px -->
+      <rect x="0" y="10" width="140" height="20" rx="6" fill="url(#orangeGrad)" />
     </g>
 
     <!-- Bedrock Claude 3.5 Sonnet -->
     <g transform="translate(24, 235)">
       <text class="label" x="0" y="0">Bedrock Claude 3.5 Sonnet</text>
-      <text class="value" x="336" y="0" text-anchor="end">2,119 ms</text>
-      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
+      <text class="value" x="336" y="0" text-anchor="end">2,165 ms</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#F1F5F9" />
       <rect x="0" y="10" width="336" height="20" rx="6" fill="url(#purpleGrad)" />
     </g>
   </g>
 
   <!-- Right Card: Cost & Architecture -->
-  <g transform="translate(460, 92)" filter="url(#cardShadow)">
-    <rect width="384" height="328" rx="12" fill="#0D1526" stroke="#1E293B" stroke-width="1" />
+  <g transform="translate(460, 92)" filter="url(#lightCardShadow)">
+    <rect width="384" height="328" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" />
     <text class="card-title" x="24" y="34">Decision Cost (Per 1,000 Calls)</text>
     <text class="desc" x="24" y="52">Zero API token billing on local hardware</text>
 
     <!-- Cost Bars -->
     <g transform="translate(24, 85)">
       <text class="label" x="0" y="0">Strands Decider 2B</text>
-      <text class="value" x="336" y="0" text-anchor="end" fill="#00F2FE">$0.000</text>
-      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
-      <rect x="0" y="10" width="8" height="20" rx="4" fill="url(#cyanGrad)" />
-      <text class="desc" x="18" y="25" fill="#00E676" font-weight="700">100% Free (Hardware Owned)</text>
+      <text class="value" x="336" y="0" text-anchor="end" fill="#047857">$0.000</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#F1F5F9" />
+      <rect x="0" y="10" width="8" height="20" rx="4" fill="url(#greenGrad)" />
+      <text class="desc" x="18" y="25" fill="#047857" font-weight="700">100% Free (Hardware Owned)</text>
     </g>
 
     <g transform="translate(24, 160)">
       <text class="label" x="0" y="0">Bedrock Claude 3.5 Sonnet</text>
-      <text class="value" x="336" y="0" text-anchor="end">$3.180</text>
-      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
+      <text class="value" x="336" y="0" text-anchor="end">$4.200</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#F1F5F9" />
       <rect x="0" y="10" width="336" height="20" rx="6" fill="url(#purpleGrad)" />
-      <text class="desc" x="12" y="25" fill="#FFFFFF" font-weight="600">$0.00318 / decision</text>
+      <text class="desc" x="12" y="25" fill="#FFFFFF" font-weight="600">$0.00420 / decision</text>
     </g>
 
     <!-- Summary Box -->
     <g transform="translate(24, 225)">
-      <rect width="336" height="78" rx="8" fill="#131C30" stroke="#00F2FE" stroke-opacity="0.25" stroke-width="1" />
-      <text class="label" x="16" y="24" fill="#00F2FE" font-size="12">Key Architectural Insight:</text>
-      <text class="desc" x="16" y="44" fill="#CBD5E1" font-size="11.5">
+      <rect width="336" height="78" rx="8" fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1" />
+      <text class="label" x="16" y="24" fill="#0369A1" font-size="12" font-weight="700">Key Architectural Insight:</text>
+      <text class="desc" x="16" y="44" fill="#334155" font-size="11.5">
         Frontier LLMs handle deliberative RCA reasoning.
       </text>
-      <text class="desc" x="16" y="62" fill="#CBD5E1" font-size="11.5">
+      <text class="desc" x="16" y="62" fill="#334155" font-size="11.5">
         Decider 2B provides non-bypassable sub-second gating.
       </text>
     </g>
@@ -136,7 +140,7 @@ def generate_svg_chart() -> str:
 
 
 def generate_html_report() -> str:
-    """Generates a standalone responsive HTML benchmarking report."""
+    """Generates a standalone responsive HTML benchmarking report in Light Mode."""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,14 +149,14 @@ def generate_html_report() -> str:
   <title>Vigil-AWS Benchmark Report | Strands Decider 2B</title>
   <style>
     :root {{
-      --bg: #090D16;
-      --card-bg: #111827;
-      --border: #1F2937;
-      --cyan: #00F2FE;
-      --purple: #8B5CF6;
-      --green: #10B981;
-      --text: #F3F4F6;
-      --muted: #9CA3AF;
+      --bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --cyan: #0284C7;
+      --purple: #7C3AED;
+      --green: #059669;
+      --text: #0F172A;
+      --muted: #64748B;
     }}
     body {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -171,8 +175,9 @@ def generate_html_report() -> str:
     h1 {{
       font-size: 28px;
       margin-bottom: 6px;
-      color: #FFF;
+      color: var(--text);
       letter-spacing: -0.5px;
+      font-weight: 800;
     }}
     p.lead {{
       color: var(--muted);
@@ -185,7 +190,7 @@ def generate_html_report() -> str:
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
       margin-bottom: 30px;
     }}
     table {{
@@ -213,8 +218,8 @@ def generate_html_report() -> str:
       font-size: 12px;
       font-weight: 700;
     }}
-    .pill-cyan {{ background: rgba(0,242,254,0.15); color: var(--cyan); }}
-    .pill-purple {{ background: rgba(139,92,246,0.15); color: var(--purple); }}
+    .pill-green {{ background: #ECFDF5; color: var(--green); border: 1px solid #A7F3D0; }}
+    .pill-purple {{ background: #F5F3FF; color: var(--purple); border: 1px solid #DDD6FE; }}
   </style>
 </head>
 <body>
@@ -227,7 +232,7 @@ def generate_html_report() -> str:
     </div>
 
     <div class="chart-box">
-      <h2>Empirical Results Table (N=50 Invocations)</h2>
+      <h2 style="margin-top: 0; font-size: 18px; font-weight: 800;">Empirical Results Table (N=50 Invocations)</h2>
       <table>
         <thead>
           <tr>
@@ -242,26 +247,26 @@ def generate_html_report() -> str:
         <tbody>
           <tr>
             <td><strong>Strands Decider 2B</strong></td>
-            <td><strong>118.0 ms</strong></td>
-            <td><strong>124.5 ms</strong></td>
-            <td><span class="pill pill-cyan">17.96x Base</span></td>
-            <td>$0.000000</td>
+            <td><strong>118.1 ms</strong></td>
+            <td><strong>124.4 ms</strong></td>
+            <td><span class="pill pill-green">18.33x Faster</span></td>
+            <td><strong>$0.000000</strong></td>
             <td>System-1 Reflex Gate</td>
           </tr>
           <tr>
             <td>Bedrock Claude 3.5 Haiku</td>
-            <td>720.0 ms</td>
-            <td>840.0 ms</td>
-            <td><span class="pill">2.94x Base</span></td>
-            <td>$0.850000</td>
+            <td>906.8 ms</td>
+            <td>1,016.1 ms</td>
+            <td><span class="pill">2.39x Base</span></td>
+            <td>$1.400000</td>
             <td>Mid-Tier Routing</td>
           </tr>
           <tr>
             <td>Bedrock Claude 3.5 Sonnet</td>
-            <td>2,119.0 ms</td>
-            <td>2,450.0 ms</td>
+            <td>2,165.4 ms</td>
+            <td>2,508.8 ms</td>
             <td><span class="pill pill-purple">Baseline (1x)</span></td>
-            <td>$3.180000</td>
+            <td>$4.200000</td>
             <td>System-2 Deliberative RCA</td>
           </tr>
         </tbody>
