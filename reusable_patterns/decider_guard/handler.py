@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from typing import Any, Dict, List, Optional
 
 from strands.hooks.events import BeforeToolCallEvent
@@ -36,7 +37,7 @@ class DeciderGroundedGuardrail(InterventionHandler):
     2. What is the operational blast radius? (`choice`)
     3. Does the payload contain adversarial tampering? (`noul`)
 
-    Returns `Proceed()`, `Confirm()`, or `Deny()` based on mathematically calibrated thresholds.
+    Returns `Proceed()`, `Confirm()`, `Deny()`, or `Guide()` based on calibrated thresholds.
     """
 
     def __init__(
@@ -46,12 +47,16 @@ class DeciderGroundedGuardrail(InterventionHandler):
         block_destructive: bool = True,
         require_human_on_high_risk: bool = True,
         enable_fallback_emulator: bool = True,
+        enable_guidance_for_mild_drift: bool = True,
+        on_decision_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
         client: Optional[StrandsDeciderClient] = None,
     ) -> None:
         self._name = "decider-grounded-guardrail"
         self.confidence_threshold = confidence_threshold
         self.block_destructive = block_destructive
         self.require_human_on_high_risk = require_human_on_high_risk
+        self.enable_guidance_for_mild_drift = enable_guidance_for_mild_drift
+        self.on_decision_callback = on_decision_callback
         self.client = client or StrandsDeciderClient(
             base_url=decider_url,
             enable_fallback_emulator=enable_fallback_emulator,
@@ -62,6 +67,8 @@ class DeciderGroundedGuardrail(InterventionHandler):
         self.total_proceeds: int = 0
         self.total_confirms: int = 0
         self.total_denials: int = 0
+        self.total_guides: int = 0
+        self.total_latency_ms: float = 0.0
         self.decision_history: List[Dict[str, Any]] = []
 
     @property
@@ -94,7 +101,10 @@ class DeciderGroundedGuardrail(InterventionHandler):
         )
 
         self.total_decisions += 1
-        decision_record = {
+        self.total_latency_ms += eval_result.latency_ms
+
+        decision_record: Dict[str, Any] = {
+            "decision_id": f"dec-{self.total_decisions:04d}",
             "tool_name": tool_name,
             "args": args,
             "grounding_score": eval_result.grounding_score,
@@ -114,7 +124,7 @@ class DeciderGroundedGuardrail(InterventionHandler):
             )
             decision_record["action"] = "Deny"
             decision_record["reason"] = reason
-            self.decision_history.append(decision_record)
+            self._record_and_dispatch(decision_record)
             logger.warning(f"DENY [{tool_name}]: {reason}")
             return Deny(reason=reason)
 
@@ -128,9 +138,20 @@ class DeciderGroundedGuardrail(InterventionHandler):
                 )
                 decision_record["action"] = "Deny"
                 decision_record["reason"] = reason
-                self.decision_history.append(decision_record)
+                self._record_and_dispatch(decision_record)
                 logger.warning(f"DENY [{tool_name}]: {reason}")
                 return Deny(reason=reason)
+            elif 0.70 <= eval_result.grounding_score < self.confidence_threshold and self.enable_guidance_for_mild_drift:
+                # Mild parameter drift on non-destructive tool: guide the agent to refine parameters
+                self.total_guides += 1
+                guidance = (
+                    f"Decider 2B detected mild parameter drift (grounding: {eval_result.grounding_score:.2f}). "
+                    f"Please verify arguments {args} strictly match the operator prompt: '{user_prompt}'."
+                )
+                decision_record["action"] = "Guide"
+                decision_record["reason"] = guidance
+                self._record_and_dispatch(decision_record)
+                return Guide(guidance=guidance)
             else:
                 # Moderate risk / ambiguous grounding: prompt human operator for confirmation
                 if self.require_human_on_high_risk:
@@ -141,7 +162,7 @@ class DeciderGroundedGuardrail(InterventionHandler):
                     )
                     decision_record["action"] = "Confirm"
                     decision_record["reason"] = reason
-                    self.decision_history.append(decision_record)
+                    self._record_and_dispatch(decision_record)
                     return Confirm(reason=reason)
 
         # Gate 3: High-risk destructive action check
@@ -154,26 +175,48 @@ class DeciderGroundedGuardrail(InterventionHandler):
                 )
                 decision_record["action"] = "Confirm"
                 decision_record["reason"] = reason
-                self.decision_history.append(decision_record)
+                self._record_and_dispatch(decision_record)
                 return Confirm(reason=reason)
             else:
                 self.total_denials += 1
                 reason = f"Blocked by Decider 2B: Destructive cloud actions are restricted by policy."
                 decision_record["action"] = "Deny"
                 decision_record["reason"] = reason
-                self.decision_history.append(decision_record)
+                self._record_and_dispatch(decision_record)
                 return Deny(reason=reason)
 
         # Gate 4: Action is verified safe and strictly grounded -> Fast-path Proceed!
         self.total_proceeds += 1
         decision_record["action"] = "Proceed"
         decision_record["reason"] = "Grounded and safe"
-        self.decision_history.append(decision_record)
+        self._record_and_dispatch(decision_record)
         logger.info(
             f"PROCEED [{tool_name}] in {eval_result.latency_ms:.1f}ms: "
             f"grounding={eval_result.grounding_score:.2f}, risk={eval_result.blast_radius.value}"
         )
         return Proceed()
+
+    def _record_and_dispatch(self, record: Dict[str, Any]) -> None:
+        """Stores decision in history and triggers optional external telemetry callback."""
+        self.decision_history.append(record)
+        if self.on_decision_callback:
+            try:
+                self.on_decision_callback(record)
+            except Exception as ex:
+                logger.debug(f"Telemetry callback failed: {ex}")
+
+    def get_telemetry_summary(self) -> Dict[str, Any]:
+        """Returns consolidated metrics across all lifecycle decisions."""
+        avg_lat = (self.total_latency_ms / self.total_decisions) if self.total_decisions > 0 else 0.0
+        return {
+            "total_decisions": self.total_decisions,
+            "proceeds": self.total_proceeds,
+            "confirms": self.total_confirms,
+            "denials": self.total_denials,
+            "guides": self.total_guides,
+            "average_latency_ms": round(avg_lat, 2),
+            "fast_path_ratio": round(self.total_proceeds / max(1, self.total_decisions), 3),
+        }
 
     def _extract_user_prompt(self, event: BeforeToolCallEvent) -> str:
         """Extracts the originating operator request from the invocation context."""

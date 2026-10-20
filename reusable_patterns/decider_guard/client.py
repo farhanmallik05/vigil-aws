@@ -2,6 +2,7 @@
 
 Connects to the Strands Decider HTTP endpoint (`/v1/systemone`) when running,
 or provides a high-fidelity calibrated emulator for development and CI/CD testing.
+Supports multimodal image inputs, retry backoff, and concurrent batch evaluation.
 """
 
 from __future__ import annotations
@@ -22,25 +23,42 @@ from .questions import BlastRadiusCategory, DeciderEvaluationResult, DeciderQues
 logger = logging.getLogger("decider_guard.client")
 
 
+class DeciderClientError(Exception):
+    """Base exception for Decider client operations."""
+    pass
+
+
+class DeciderConnectionError(DeciderClientError):
+    """Raised when communication with the Strands Decider server fails."""
+    pass
+
+
+class DeciderTimeoutError(DeciderClientError):
+    """Raised when Strands Decider evaluation times out."""
+    pass
+
+
 class StrandsDeciderClient:
-    """Production-grade client for Strands Decider 2B inference."""
+    """Production-grade client for Strands Decider 2B inference with retry and batching."""
 
     def __init__(
         self,
         base_url: str = "http://localhost:8000",
         timeout_seconds: float = 2.0,
         enable_fallback_emulator: bool = True,
+        max_retries: int = 2,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.enable_fallback_emulator = enable_fallback_emulator
+        self.max_retries = max_retries
         self._async_client: Optional[httpx.AsyncClient] = None
         self._cache: Dict[str, DeciderEvaluationResult] = {}
 
     async def get_client(self) -> httpx.AsyncClient:
         """Lazily initialize and return the async HTTP client with connection pooling."""
         if self._async_client is None or self._async_client.is_closed:
-            limits = httpx.Limits(max_keepalive_connections=20, max_connections=50)
+            limits = httpx.Limits(max_keepalive_connections=30, max_connections=100)
             self._async_client = httpx.AsyncClient(
                 base_url=self.base_url,
                 timeout=httpx.Timeout(self.timeout_seconds, connect=0.5),
@@ -58,6 +76,7 @@ class StrandsDeciderClient:
         self,
         state: str,
         questions: List[DeciderQuestion],
+        images: Optional[List[str]] = None,
         cache_key: Optional[str] = None,
     ) -> DeciderEvaluationResult:
         """Evaluates state against a set of typed Decider questions.
@@ -69,40 +88,63 @@ class StrandsDeciderClient:
             return self._cache[cache_key]
 
         questions_dict = {q.question_id: q.to_api_payload() for q in questions}
-        payload = {
+        payload: Dict[str, Any] = {
             "state": state,
             "questions": questions_dict,
         }
+        if images:
+            payload["images"] = images
 
         start_time = time.perf_counter()
-        try:
-            client = await self.get_client()
-            resp = await client.post("/v1/systemone", json=payload)
-            if resp.status_code == 200:
-                elapsed_ms = (time.perf_counter() - start_time) * 1000.0
-                data = resp.json()
-                result = self._parse_api_response(data, elapsed_ms)
-                if cache_key:
-                    self._cache[cache_key] = result
-                return result
-            else:
-                logger.warning(
-                    f"Strands Decider server returned HTTP {resp.status_code}: {resp.text}"
-                )
-        except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError) as ex:
-            if not self.enable_fallback_emulator:
-                raise RuntimeError(
-                    f"Failed to connect to Strands Decider at {self.base_url}: {ex}"
-                ) from ex
-            logger.debug(
-                f"Strands Decider daemon offline ({ex}). Engaging calibrated local emulator."
-            )
+        last_error: Optional[Exception] = None
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                client = await self.get_client()
+                resp = await client.post("/v1/systemone", json=payload)
+                if resp.status_code == 200:
+                    elapsed_ms = (time.perf_counter() - start_time) * 1000.0
+                    data = resp.json()
+                    result = self._parse_api_response(data, elapsed_ms)
+                    if cache_key:
+                        self._cache[cache_key] = result
+                    return result
+                else:
+                    logger.warning(
+                        f"Strands Decider server returned HTTP {resp.status_code}: {resp.text}"
+                    )
+            except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError) as ex:
+                last_error = ex
+                if attempt < self.max_retries:
+                    await asyncio.sleep(0.05 * (2 ** attempt))
+                    continue
+
+        if not self.enable_fallback_emulator:
+            if isinstance(last_error, httpx.TimeoutException):
+                raise DeciderTimeoutError(f"Decider evaluation timed out at {self.base_url}") from last_error
+            raise DeciderConnectionError(f"Failed to connect to Strands Decider at {self.base_url}") from last_error
 
         # Fallback to calibrated emulator
-        result = await self._simulate_decider_inference(state, questions)
+        result = await self._simulate_decider_inference(state, questions, images)
         if cache_key:
             self._cache[cache_key] = result
         return result
+
+    async def evaluate_batch(
+        self,
+        items: List[Dict[str, Any]],
+    ) -> List[DeciderEvaluationResult]:
+        """Concurrently evaluates multiple state-question items in parallel."""
+        tasks = [
+            self.evaluate(
+                state=item["state"],
+                questions=item["questions"],
+                images=item.get("images"),
+                cache_key=item.get("cache_key"),
+            )
+            for item in items
+        ]
+        return await asyncio.gather(*tasks)
 
     def _parse_api_response(
         self, data: Dict[str, Any], elapsed_ms: float
@@ -138,7 +180,10 @@ class StrandsDeciderClient:
         )
 
     async def _simulate_decider_inference(
-        self, state: str, questions: List[DeciderQuestion]
+        self,
+        state: str,
+        questions: List[DeciderQuestion],
+        images: Optional[List[str]] = None,
     ) -> DeciderEvaluationResult:
         """Calibrated local emulator of Strands Decider 2B inference.
 

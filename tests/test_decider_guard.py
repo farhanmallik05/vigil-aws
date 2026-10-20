@@ -1,10 +1,13 @@
-"""Unit tests for DeciderGroundedGuardrail and Strands Decider 2B client."""
+"""Comprehensive unit and stress tests for DeciderGroundedGuardrail and Strands Decider 2B client."""
 
 import asyncio
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
-from reusable_patterns.decider_guard.client import StrandsDeciderClient
+from reusable_patterns.decider_guard.client import (
+    DeciderConnectionError,
+    StrandsDeciderClient,
+)
 from reusable_patterns.decider_guard.handler import DeciderGroundedGuardrail
 from reusable_patterns.decider_guard.questions import (
     BlastRadiusCategory,
@@ -13,7 +16,7 @@ from reusable_patterns.decider_guard.questions import (
     make_injection_check_question,
 )
 from strands.hooks.events import BeforeToolCallEvent
-from strands.interventions.actions import Confirm, Deny, Proceed
+from strands.interventions.actions import Confirm, Deny, Guide, Proceed
 
 
 @pytest.fixture
@@ -118,6 +121,23 @@ async def test_client_adversarial_injection_detection(decider_client):
 
 
 @pytest.mark.asyncio
+async def test_client_batch_evaluation(decider_client):
+    """Verify concurrent batch evaluation across multiple queries."""
+    q1 = make_grounding_question("check_health", {}, "check health")
+    q2 = make_blast_radius_question("check_health", {})
+
+    items = [
+        {"state": f"Query {i}: check_health", "questions": [q1, q2]}
+        for i in range(5)
+    ]
+    results = await decider_client.evaluate_batch(items)
+    assert len(results) == 5
+    for res in results:
+        assert res.latency_ms > 0
+        assert res.blast_radius == BlastRadiusCategory.HARMLESS_READ
+
+
+@pytest.mark.asyncio
 async def test_handler_proceeds_on_safe_tool(guardrail):
     """Verify that safe, grounded operational tools receive Proceed() in ~115ms."""
     event = make_mock_event(
@@ -185,18 +205,44 @@ async def test_handler_denies_destructive_when_human_confirmation_disabled():
 
 
 @pytest.mark.asyncio
-async def test_handler_decision_history_tracking(guardrail):
-    """Verify that telemetry records latency and confidence metrics accurately."""
-    event = make_mock_event(
-        tool_name="check_service_health",
-        args={"cluster": "ecs-prod"},
-        user_prompt="Check ECS cluster health",
-    )
-    await guardrail.before_tool_call(event)
+async def test_handler_telemetry_callback_and_summary():
+    """Verify that external telemetry callback fires and summary reports accurate metrics."""
+    callback_records = []
 
-    assert len(guardrail.decision_history) == 1
-    record = guardrail.decision_history[0]
-    assert record["tool_name"] == "check_service_health"
-    assert record["latency_ms"] > 0
-    assert "grounding_score" in record
-    assert "blast_radius" in record
+    def on_decision(record):
+        callback_records.append(record)
+
+    client = StrandsDeciderClient(enable_fallback_emulator=True)
+    guard = DeciderGroundedGuardrail(
+        client=client,
+        on_decision_callback=on_decision,
+    )
+
+    event = make_mock_event("describe_cloudwatch_alarms", {}, "Show alarms")
+    await guard.before_tool_call(event)
+
+    assert len(callback_records) == 1
+    assert callback_records[0]["action"] == "Proceed"
+
+    summary = guard.get_telemetry_summary()
+    assert summary["total_decisions"] == 1
+    assert summary["proceeds"] == 1
+    assert summary["average_latency_ms"] > 0
+    assert summary["fast_path_ratio"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_concurrent_stress_evaluations(guardrail):
+    """Stress test: 15 concurrent decisions handled asynchronously."""
+    events = [
+        make_mock_event(
+            tool_name="get_service_metrics",
+            args={"index": i},
+            user_prompt=f"Get service metrics for node {i}",
+        )
+        for i in range(15)
+    ]
+    actions = await asyncio.gather(*(guardrail.before_tool_call(ev) for ev in events))
+    assert len(actions) == 15
+    assert all(isinstance(a, Proceed) for a in actions)
+    assert guardrail.total_decisions == 15
