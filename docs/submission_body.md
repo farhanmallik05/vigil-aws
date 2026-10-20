@@ -113,7 +113,7 @@ agent = Agent(
 
 ## 6. Live Demos, Repository & Deliverables
 
-- **Public GitHub Repository:** [https://github.com/<YOUR_GITHUB_USERNAME>/vigil-aws](https://github.com/<YOUR_GITHUB_USERNAME>/vigil-aws)
+- **Public GitHub Repository:** [https://github.com/farhanmallik05/vigil-aws](https://github.com/farhanmallik05/vigil-aws)
 - **Demo Video (2m 45s):** [https://youtu.be/<YOUR_VIDEO_ID>](https://youtu.be/<YOUR_VIDEO_ID>)
 - **Builder Center Written Article:** [docs/builder_center_article.md](docs/builder_center_article.md)
 - **Interactive Cyber-SRE Mission Control HUD:** Run locally with `python src/web_dashboard.py` at `http://localhost:8501`.

@@ -146,7 +146,7 @@ The package includes typed question generators, asynchronous HTTP client with fa
 
 ### Field 9: Public Repository Link
 ```text
-https://github.com/<YOUR_GITHUB_USERNAME>/vigil-aws
+https://github.com/farhanmallik05/vigil-aws
 ```
 *(Ensure your repo is set to Public on GitHub)*
 
