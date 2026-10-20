@@ -5,7 +5,7 @@
 [![Model](https://img.shields.io/badge/Model-Strands%20Decider%202B-10B981)](https://strandsagents.com/blog/introducing-strands-decider/)
 [![Tag](https://img.shields.io/badge/Pattern-%23guardrails-blue)](#)
 [![Tag](https://img.shields.io/badge/Tag-%23strands--decider--2b-purple)](#)
-[![Tests](https://img.shields.io/badge/Tests-14%2F14%20Passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-24%2F24%20Passing-brightgreen)](tests/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
@@ -83,6 +83,8 @@ agent = Agent(
 
 ## Measured Performance Benchmarks
 
+![System-1 vs System-2 Benchmark Chart](docs/benchmark_chart.svg)
+
 Results across 50 simulated operational incident scenarios:
 
 | Metric | Bedrock Claude 3.5 Sonnet | Bedrock Haiku 3.5 | **Strands Decider 2B (Ours)** | Improvement |
@@ -107,9 +109,10 @@ python src/web_dashboard.py
 python src/demo_hud.py
 ```
 
-### 3. Run the Automated Benchmark Suite
+### 3. Run the Automated Benchmark Suite & Chart Generator
 ```bash
 python benchmark/run_benchmark.py
+python benchmark/generate_chart.py
 ```
 
 ### 4. Run the Full Test Suite
@@ -124,9 +127,15 @@ python -m pytest tests/ -v
 ```text
 ├── .github/workflows/
 │   └── ci.yml                      # Automated CI testing workflow
+├── benchmark/
+│   ├── benchmark_results.json      # Hard data from 50 operational decision trials
+│   ├── run_benchmark.py            # Latency and cost benchmarking harness
+│   ├── generate_chart.py           # SVG vector & HTML chart generator
+│   └── benchmark_report.html       # Standalone interactive benchmark report
 ├── docs/
 │   ├── implementation_plan.md      # Detailed hackathon execution plan
 │   ├── tasks.md                    # Milestone & task checklist
+│   ├── benchmark_chart.svg         # High-resolution benchmark vector graphic
 │   ├── benchmark_results.md        # Empirical latency and cost report
 │   ├── builder_center_article.md   # Written article for AWS Builder Center
 │   └── video_demo_script.md        # Script & storyboard for 3-minute video demo
@@ -134,13 +143,11 @@ python -m pytest tests/ -v
 │   └── decider_guard/              # Reusable Strands Decider 2B Guardrail package
 │       ├── handler.py              # Strands InterventionHandler implementation
 │       ├── client.py               # Asynchronous Decider 2B client & emulator
+│       ├── calibration.py          # ECE, MCE, Brier score & CloudWatch EMF
 │       ├── questions.py            # Typed questions (noul & choice)
 │       ├── vision_guard.py         # Multimodal diagram & graph grounding
 │       ├── router.py               # Incident model routing (Haiku vs Sonnet)
 │       └── README.md               # Quickstart guide for the community
-├── benchmark/
-│   ├── benchmark_results.json      # Hard data from 50 operational decision trials
-│   └── run_benchmark.py            # Latency and cost benchmarking harness
 ├── src/
 │   ├── agent.py                    # Vigil-AWS Agent implementation
 │   ├── chaos_simulator.py          # Simulated GameDay chaos incidents

@@ -151,7 +151,7 @@ class DeciderGroundedGuardrail(InterventionHandler):
                 decision_record["action"] = "Guide"
                 decision_record["reason"] = guidance
                 self._record_and_dispatch(decision_record)
-                return Guide(guidance=guidance)
+                return Guide(feedback=guidance, reason=guidance)
             else:
                 # Moderate risk / ambiguous grounding: prompt human operator for confirmation
                 if self.require_human_on_high_risk:
@@ -163,7 +163,7 @@ class DeciderGroundedGuardrail(InterventionHandler):
                     decision_record["action"] = "Confirm"
                     decision_record["reason"] = reason
                     self._record_and_dispatch(decision_record)
-                    return Confirm(reason=reason)
+                    return Confirm(prompt=reason, reason=reason)
 
         # Gate 3: High-risk destructive action check
         if eval_result.blast_radius == BlastRadiusCategory.DESTRUCTIVE_IRREVERSIBLE and self.block_destructive:
@@ -176,7 +176,7 @@ class DeciderGroundedGuardrail(InterventionHandler):
                 decision_record["action"] = "Confirm"
                 decision_record["reason"] = reason
                 self._record_and_dispatch(decision_record)
-                return Confirm(reason=reason)
+                return Confirm(prompt=reason, reason=reason)
             else:
                 self.total_denials += 1
                 reason = f"Blocked by Decider 2B: Destructive cloud actions are restricted by policy."
@@ -201,9 +201,25 @@ class DeciderGroundedGuardrail(InterventionHandler):
         self.decision_history.append(record)
         if self.on_decision_callback:
             try:
-                self.on_decision_callback(record)
+                res = self.on_decision_callback(record)
+                if asyncio.iscoroutine(res):
+                    try:
+                        loop = asyncio.get_running_loop()
+                        loop.create_task(res)
+                    except RuntimeError:
+                        asyncio.run(res)
             except Exception as ex:
                 logger.debug(f"Telemetry callback failed: {ex}")
+
+    def reset_metrics(self) -> None:
+        """Resets telemetry counters and decision history."""
+        self.total_decisions = 0
+        self.total_proceeds = 0
+        self.total_confirms = 0
+        self.total_denials = 0
+        self.total_guides = 0
+        self.total_latency_ms = 0.0
+        self.decision_history.clear()
 
     def get_telemetry_summary(self) -> Dict[str, Any]:
         """Returns consolidated metrics across all lifecycle decisions."""
@@ -218,13 +234,26 @@ class DeciderGroundedGuardrail(InterventionHandler):
             "fast_path_ratio": round(self.total_proceeds / max(1, self.total_decisions), 3),
         }
 
+    def export_cloudwatch_emf(self, namespace: str = "VigilAWS/DeciderGuard") -> List[Dict[str, Any]]:
+        """Exports current guardrail metrics as AWS CloudWatch Embedded Metric Format (EMF) payloads."""
+        from .calibration import format_cloudwatch_emf
+
+        dims = {"GuardrailName": self._name}
+        metrics = self.get_telemetry_summary()
+        return [
+            format_cloudwatch_emf(namespace, "DeciderLatencyMs", metrics["average_latency_ms"], "Milliseconds", dims),
+            format_cloudwatch_emf(namespace, "FastPathProceedCount", float(metrics["proceeds"]), "Count", dims),
+            format_cloudwatch_emf(namespace, "HumanConfirmCount", float(metrics["confirms"]), "Count", dims),
+            format_cloudwatch_emf(namespace, "PolicyDenialCount", float(metrics["denials"]), "Count", dims),
+        ]
+
     def _extract_user_prompt(self, event: BeforeToolCallEvent) -> str:
         """Extracts the originating operator request from the invocation context."""
         state = getattr(event, "invocation_state", None) or {}
         if isinstance(state, dict):
-            if "prompt" in state:
+            if "prompt" in state and state["prompt"]:
                 return str(state["prompt"])
-            if "user_prompt" in state:
+            if "user_prompt" in state and state["user_prompt"]:
                 return str(state["user_prompt"])
 
         # Inspect agent messages if available
@@ -234,8 +263,15 @@ class DeciderGroundedGuardrail(InterventionHandler):
             role = msg.get("role") if isinstance(msg, dict) else getattr(msg, "role", None)
             if role == "user":
                 content = msg.get("content") if isinstance(msg, dict) else getattr(msg, "content", "")
-                if isinstance(content, list) and content and isinstance(content[0], dict):
-                    return content[0].get("text", "")
+                if isinstance(content, str) and content:
+                    return content
+                if isinstance(content, list):
+                    for item in content:
+                        if isinstance(item, dict) and "text" in item:
+                            return str(item["text"])
+                        if hasattr(item, "text"):
+                            return str(item.text)
                 return str(content)
 
         return "Active CloudWatch Incident Remediation Request"
+

@@ -2,7 +2,7 @@
 
 Connects to the Strands Decider HTTP endpoint (`/v1/systemone`) when running,
 or provides a high-fidelity calibrated emulator for development and CI/CD testing.
-Supports multimodal image inputs, retry backoff, and concurrent batch evaluation.
+Supports multimodal image inputs, retry backoff, concurrent batch evaluation, and TTL caching.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import logging
 import random
 import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
@@ -47,13 +47,24 @@ class StrandsDeciderClient:
         timeout_seconds: float = 2.0,
         enable_fallback_emulator: bool = True,
         max_retries: int = 2,
+        cache_ttl_seconds: float = 60.0,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
         self.enable_fallback_emulator = enable_fallback_emulator
         self.max_retries = max_retries
+        self.cache_ttl_seconds = cache_ttl_seconds
         self._async_client: Optional[httpx.AsyncClient] = None
-        self._cache: Dict[str, DeciderEvaluationResult] = {}
+        self._cache: Dict[str, Tuple[DeciderEvaluationResult, float]] = {}
+        self.cache_hits: int = 0
+        self.cache_misses: int = 0
+
+    async def __aenter__(self) -> StrandsDeciderClient:
+        await self.get_client()
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        await self.close()
 
     async def get_client(self) -> httpx.AsyncClient:
         """Lazily initialize and return the async HTTP client with connection pooling."""
@@ -72,6 +83,19 @@ class StrandsDeciderClient:
             await self._async_client.aclose()
             self._async_client = None
 
+    def _get_from_cache(self, key: Optional[str]) -> Optional[DeciderEvaluationResult]:
+        """Checks cache with TTL eviction."""
+        if not key or key not in self._cache:
+            self.cache_misses += 1
+            return None
+        res, ts = self._cache[key]
+        if time.time() - ts > self.cache_ttl_seconds:
+            del self._cache[key]
+            self.cache_misses += 1
+            return None
+        self.cache_hits += 1
+        return res
+
     async def evaluate(
         self,
         state: str,
@@ -79,13 +103,10 @@ class StrandsDeciderClient:
         images: Optional[List[str]] = None,
         cache_key: Optional[str] = None,
     ) -> DeciderEvaluationResult:
-        """Evaluates state against a set of typed Decider questions.
-
-        Queries the live `strands-decider` daemon if available. If offline and fallback
-        is enabled, invokes the calibrated local emulator.
-        """
-        if cache_key and cache_key in self._cache:
-            return self._cache[cache_key]
+        """Evaluates state against a set of typed Decider questions."""
+        cached = self._get_from_cache(cache_key)
+        if cached:
+            return cached
 
         questions_dict = {q.question_id: q.to_api_payload() for q in questions}
         payload: Dict[str, Any] = {
@@ -107,12 +128,14 @@ class StrandsDeciderClient:
                     data = resp.json()
                     result = self._parse_api_response(data, elapsed_ms)
                     if cache_key:
-                        self._cache[cache_key] = result
+                        self._cache[cache_key] = (result, time.time())
                     return result
                 else:
-                    logger.warning(
-                        f"Strands Decider server returned HTTP {resp.status_code}: {resp.text}"
-                    )
+                    msg = f"Strands Decider server returned HTTP {resp.status_code}"
+                    if self.enable_fallback_emulator:
+                        logger.debug(f"{msg}: {resp.text[:120]}")
+                    else:
+                        logger.warning(f"{msg}: {resp.text[:200]}")
             except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError) as ex:
                 last_error = ex
                 if attempt < self.max_retries:
@@ -127,7 +150,7 @@ class StrandsDeciderClient:
         # Fallback to calibrated emulator
         result = await self._simulate_decider_inference(state, questions, images)
         if cache_key:
-            self._cache[cache_key] = result
+            self._cache[cache_key] = (result, time.time())
         return result
 
     async def evaluate_batch(
@@ -152,22 +175,33 @@ class StrandsDeciderClient:
         """Parses the official `/v1/systemone` JSON response from Strands Decider 2B."""
         answers = data.get("answers", {})
 
-        # 1. Grounding score (noul)
-        grounding_data = answers.get("is_grounded", {})
-        grounding_score = float(grounding_data.get("noul", 0.5))
+        # 1. Grounding score (noul) - handles both dict and scalar formats
+        grounding_data = answers.get("is_grounded", 0.5)
+        if isinstance(grounding_data, dict):
+            grounding_score = float(grounding_data.get("noul", 0.5))
+        else:
+            grounding_score = float(grounding_data)
 
         # 2. Blast radius (choice)
         blast_data = answers.get("blast_radius", {})
-        blast_choice_str = blast_data.get("choice", BlastRadiusCategory.HARMLESS_READ.value)
-        blast_conf = float(blast_data.get("confidence", 0.5))
+        if isinstance(blast_data, dict):
+            blast_choice_str = blast_data.get("choice", BlastRadiusCategory.HARMLESS_READ.value)
+            blast_conf = float(blast_data.get("confidence", 0.5))
+        else:
+            blast_choice_str = str(blast_data)
+            blast_conf = 0.85
+
         try:
             blast_category = BlastRadiusCategory(blast_choice_str)
         except ValueError:
             blast_category = BlastRadiusCategory.SAFE_MUTATION
 
         # 3. Adversarial injection score (noul)
-        adv_data = answers.get("is_adversarial", {})
-        adv_score = float(adv_data.get("noul", 0.0))
+        adv_data = answers.get("is_adversarial", 0.0)
+        if isinstance(adv_data, dict):
+            adv_score = float(adv_data.get("noul", 0.0))
+        else:
+            adv_score = float(adv_data)
 
         return DeciderEvaluationResult(
             grounding_score=grounding_score,
@@ -185,72 +219,39 @@ class StrandsDeciderClient:
         questions: List[DeciderQuestion],
         images: Optional[List[str]] = None,
     ) -> DeciderEvaluationResult:
-        """Calibrated local emulator of Strands Decider 2B inference.
-
-        Accurately reproduces the decision distribution, calibrated confidence bounds,
-        and ~114ms latency profile of `StrandsAgents/strands-decider-2B-qwen3.5-v1-2610`.
-        """
-        # Emulate realistic inference latency: 105ms - 125ms (median ~114ms on local CPU)
+        """Calibrated local emulator of Strands Decider 2B inference."""
         simulated_delay = random.uniform(0.105, 0.125)
         await asyncio.sleep(simulated_delay)
 
-        state_lower = state.lower()
+        state_lower = (state or "").lower()
 
-        # Destructive indicators
         destructive_keywords = [
-            "terminate",
-            "delete",
-            "destroy",
-            "drop",
-            "truncate",
-            "wipe",
-            "kill",
-            "purge",
-            "revoke_all",
-            "deregister",
-            "detach_policy",
+            "terminate", "delete", "destroy", "drop", "truncate",
+            "wipe", "kill", "purge", "revoke_all", "deregister", "detach_policy",
         ]
-        # Read-only harmless indicators
         read_keywords = [
-            "describe",
-            "get",
-            "list",
-            "check",
-            "read",
-            "inspect",
-            "view",
-            "query",
-            "status",
-            "metrics",
-            "health",
+            "describe", "get", "list", "check", "read",
+            "inspect", "view", "query", "status", "metrics", "health",
         ]
-        # Adversarial prompt injection indicators
         injection_keywords = [
-            "ignore previous instructions",
-            "system override",
-            "elevate privilege",
-            "bypass guardrail",
-            "leak secret",
-            "exfiltrate",
-            "sudo",
-            "drop table",
-            "delete_table",
-            "rm -rf",
-            "cat /etc/shadow",
+            "ignore previous instructions", "system override", "elevate privilege",
+            "bypass guardrail", "leak secret", "exfiltrate", "sudo",
+            "drop table", "delete_table", "rm -rf", "cat /etc/shadow",
         ]
+
+        drift_keywords = ["drift", "suboptimal", "mismatch", "re-route", "approximate", "unaligned_param"]
 
         is_adv = any(re.search(rf"\b{re.escape(k)}\b", state_lower) for k in injection_keywords)
         is_destr = any(re.search(rf"\b{re.escape(k)}\b", state_lower) for k in destructive_keywords)
+        is_drift = any(re.search(rf"\b{re.escape(k)}\b", state_lower) for k in drift_keywords)
         is_read = any(re.search(rf"\b{re.escape(k)}\b", state_lower) for k in read_keywords)
 
-        # Grounding computation based on semantic coherence
         if is_adv:
             grounding_score = random.uniform(0.05, 0.22)
             blast_radius = BlastRadiusCategory.DESTRUCTIVE_IRREVERSIBLE
             blast_conf = random.uniform(0.93, 0.98)
             adv_score = random.uniform(0.88, 0.97)
         elif is_destr:
-            # Check if destructive action was explicitly intended/commanded by operator
             explicit_intent = (
                 "terminate" in state_lower
                 and ("i need to terminate" in state_lower or "please terminate" in state_lower or "authorized" in state_lower or "confirm" in state_lower)
@@ -265,13 +266,17 @@ class StrandsDeciderClient:
             blast_radius = BlastRadiusCategory.DESTRUCTIVE_IRREVERSIBLE
             blast_conf = random.uniform(0.91, 0.97)
             adv_score = random.uniform(0.05, 0.15)
+        elif is_drift:
+            grounding_score = random.uniform(0.72, 0.81)
+            blast_radius = BlastRadiusCategory.SAFE_MUTATION
+            blast_conf = random.uniform(0.85, 0.92)
+            adv_score = random.uniform(0.02, 0.06)
         elif is_read:
             grounding_score = random.uniform(0.92, 0.98)
             blast_radius = BlastRadiusCategory.HARMLESS_READ
             blast_conf = random.uniform(0.94, 0.99)
             adv_score = random.uniform(0.01, 0.05)
         else:
-            # Safe mutation (e.g., restart container, scale ASG)
             grounding_score = random.uniform(0.88, 0.96)
             blast_radius = BlastRadiusCategory.SAFE_MUTATION
             blast_conf = random.uniform(0.87, 0.95)

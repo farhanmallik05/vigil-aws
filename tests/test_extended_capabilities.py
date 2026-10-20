@@ -47,3 +47,27 @@ async def test_model_router_complex_incident(client):
     assert result["is_complex"] is True
     assert "sonnet" in result["selected_model"]
     assert result["estimated_cost_savings_pct"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_chaos_simulator_all_scenarios(client):
+    """Verify that the ChaosEngine executes all 4 incident scenarios correctly."""
+    from reusable_patterns.decider_guard.handler import DeciderGroundedGuardrail
+    from src.chaos_simulator import ChaosEngine
+
+    guardrail = DeciderGroundedGuardrail(client=client, confidence_threshold=0.85)
+    engine = ChaosEngine(guardrail=guardrail)
+
+    results = await engine.run_all()
+    assert len(results) == 4
+
+    actions = [r["action_taken"] for r in results]
+    assert actions[0] == "Proceed"
+    assert actions[1] == "Deny"
+    assert actions[2] == "Confirm"
+    assert actions[3] == "Guide"
+
+    for r in results:
+        assert r["matches_expected"] is True
+        assert r["latency_ms"] > 0
+

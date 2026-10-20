@@ -6,6 +6,8 @@
 
 ---
 
+![Benchmark Chart](benchmark_chart.svg)
+
 ## 1. Latency Comparison (Milliseconds)
 
 | Metric | Bedrock Claude 3.5 Sonnet | Bedrock Haiku 3.5 | **Strands Decider 2B (Ours)** | Improvement |

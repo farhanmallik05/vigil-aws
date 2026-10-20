@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vigil-AWS Benchmark Report | Strands Decider 2B</title>
+  <style>
+    :root {
+      --bg: #090D16;
+      --card-bg: #111827;
+      --border: #1F2937;
+      --cyan: #00F2FE;
+      --purple: #8B5CF6;
+      --green: #10B981;
+      --text: #F3F4F6;
+      --muted: #9CA3AF;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      max-width: 900px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 6px;
+      color: #FFF;
+      letter-spacing: -0.5px;
+    }
+    p.lead {
+      color: var(--muted);
+      margin-top: 0;
+      margin-bottom: 28px;
+      font-size: 15px;
+    }
+    .chart-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pill-cyan { background: rgba(0,242,254,0.15); color: var(--cyan); }
+    .pill-purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Vigil-AWS: Strands Decider 2B vs Bedrock Benchmark</h1>
+    <p class="lead">Empirical evaluation of System-1 reflexive guardrails versus frontier LLMs for cloud incident response.</p>
+
+    <div class="chart-box">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 460" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080C14" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#00F2FE" />
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF9900" />
+      <stop offset="100%" stop-color="#FFB84D" />
+    </linearGradient>
+    <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#00F2FE" flood-opacity="0.45" />
+    </filter>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <style>
+    .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; font-size: 20px; fill: #FFFFFF; letter-spacing: -0.5px; }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 400; font-size: 13px; fill: #94A3B8; }
+    .card-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; font-size: 14px; fill: #F1F5F9; letter-spacing: 0.5px; text-transform: uppercase; }
+    .label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 600; font-size: 13px; fill: #E2E8F0; }
+    .value { font-family: "SF Mono", Consolas, Monaco, monospace; font-weight: 700; font-size: 13px; fill: #FFFFFF; }
+    .badge { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; font-size: 11px; fill: #00F2FE; }
+    .desc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 400; font-size: 12px; fill: #64748B; }
+  </style>
+
+  <!-- Background -->
+  <rect width="880" height="460" rx="16" fill="url(#bgGrad)" stroke="#1E293B" stroke-width="1.5" />
+
+  <!-- Header -->
+  <g transform="translate(36, 40)">
+    <text class="title" x="0" y="0">VIGIL-AWS: SYSTEM-1 VS SYSTEM-2 BENCHMARK</text>
+    <text class="subtitle" x="0" y="22">Empirical Decision Latency &amp; Marginal Cost Comparison (N=50 Incident Workload)</text>
+    <!-- Tag -->
+    <rect x="680" y="-18" width="130" height="26" rx="13" fill="#132338" stroke="#00F2FE" stroke-opacity="0.4" />
+    <text class="badge" x="745" y="-1" text-anchor="middle">17.96x FASTER</text>
+  </g>
+
+  <!-- Left Card: Latency -->
+  <g transform="translate(36, 92)" filter="url(#cardShadow)">
+    <rect width="384" height="328" rx="12" fill="#0D1526" stroke="#1E293B" stroke-width="1" />
+    <text class="card-title" x="24" y="34">Decision Latency (ms)</text>
+    <text class="desc" x="24" y="52">Lower is better • Sub-second reflex threshold</text>
+
+    <!-- Strands Decider 2B -->
+    <g transform="translate(24, 85)">
+      <text class="label" x="0" y="0">Strands Decider 2B (Local CPU)</text>
+      <text class="value" x="336" y="0" text-anchor="end" fill="#00F2FE">118 ms</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
+      <!-- 118 / 2119 = 5.5% -> min display 28px -->
+      <rect x="0" y="10" width="32" height="20" rx="6" fill="url(#cyanGrad)" filter="url(#glowCyan)" />
+      <text class="desc" x="42" y="25" fill="#00F2FE" font-weight="700">118ms (Fast Path)</text>
+    </g>
+
+    <!-- Bedrock Claude 3.5 Haiku -->
+    <g transform="translate(24, 160)">
+      <text class="label" x="0" y="0">Bedrock Claude 3.5 Haiku</text>
+      <text class="value" x="336" y="0" text-anchor="end">720 ms</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
+      <!-- 720 / 2119 = 34% -> 114px -->
+      <rect x="0" y="10" width="114" height="20" rx="6" fill="url(#orangeGrad)" opacity="0.85" />
+    </g>
+
+    <!-- Bedrock Claude 3.5 Sonnet -->
+    <g transform="translate(24, 235)">
+      <text class="label" x="0" y="0">Bedrock Claude 3.5 Sonnet</text>
+      <text class="value" x="336" y="0" text-anchor="end">2,119 ms</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="url(#purpleGrad)" />
+    </g>
+  </g>
+
+  <!-- Right Card: Cost & Architecture -->
+  <g transform="translate(460, 92)" filter="url(#cardShadow)">
+    <rect width="384" height="328" rx="12" fill="#0D1526" stroke="#1E293B" stroke-width="1" />
+    <text class="card-title" x="24" y="34">Decision Cost (Per 1,000 Calls)</text>
+    <text class="desc" x="24" y="52">Zero API token billing on local hardware</text>
+
+    <!-- Cost Bars -->
+    <g transform="translate(24, 85)">
+      <text class="label" x="0" y="0">Strands Decider 2B</text>
+      <text class="value" x="336" y="0" text-anchor="end" fill="#00F2FE">$0.000</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
+      <rect x="0" y="10" width="8" height="20" rx="4" fill="url(#cyanGrad)" />
+      <text class="desc" x="18" y="25" fill="#00E676" font-weight="700">100% Free (Hardware Owned)</text>
+    </g>
+
+    <g transform="translate(24, 160)">
+      <text class="label" x="0" y="0">Bedrock Claude 3.5 Sonnet</text>
+      <text class="value" x="336" y="0" text-anchor="end">$3.180</text>
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="#162032" />
+      <rect x="0" y="10" width="336" height="20" rx="6" fill="url(#purpleGrad)" />
+      <text class="desc" x="12" y="25" fill="#FFFFFF" font-weight="600">$0.00318 / decision</text>
+    </g>
+
+    <!-- Summary Box -->
+    <g transform="translate(24, 225)">
+      <rect width="336" height="78" rx="8" fill="#131C30" stroke="#00F2FE" stroke-opacity="0.25" stroke-width="1" />
+      <text class="label" x="16" y="24" fill="#00F2FE" font-size="12">Key Architectural Insight:</text>
+      <text class="desc" x="16" y="44" fill="#CBD5E1" font-size="11.5">
+        Frontier LLMs handle deliberative RCA reasoning.
+      </text>
+      <text class="desc" x="16" y="62" fill="#CBD5E1" font-size="11.5">
+        Decider 2B provides non-bypassable sub-second gating.
+      </text>
+    </g>
+  </g>
+</svg>
+
+    </div>
+
+    <div class="chart-box">
+      <h2>Empirical Results Table (N=50 Invocations)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Evaluator Model</th>
+            <th>Median Latency</th>
+            <th>P95 Latency</th>
+            <th>Speedup</th>
+            <th>Cost / 1k Calls</th>
+            <th>Architecture Layer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Strands Decider 2B</strong></td>
+            <td><strong>118.0 ms</strong></td>
+            <td><strong>124.5 ms</strong></td>
+            <td><span class="pill pill-cyan">17.96x Base</span></td>
+            <td>$0.000000</td>
+            <td>System-1 Reflex Gate</td>
+          </tr>
+          <tr>
+            <td>Bedrock Claude 3.5 Haiku</td>
+            <td>720.0 ms</td>
+            <td>840.0 ms</td>
+            <td><span class="pill">2.94x Base</span></td>
+            <td>$0.850000</td>
+            <td>Mid-Tier Routing</td>
+          </tr>
+          <tr>
+            <td>Bedrock Claude 3.5 Sonnet</td>
+            <td>2,119.0 ms</td>
+            <td>2,450.0 ms</td>
+            <td><span class="pill pill-purple">Baseline (1x)</span></td>
+            <td>$3.180000</td>
+            <td>System-2 Deliberative RCA</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

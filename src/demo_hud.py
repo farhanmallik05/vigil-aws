@@ -127,8 +127,6 @@ async def run_scenario_visual(engine: ChaosEngine, scenario: ChaosScenario) -> N
         result = await sim_task
         progress.update(task, completed=100, ms=result["latency_ms"])
 
-    # Render decision verdict panel
-    action = result["action_taken"]
     if action == "Proceed":
         action_style = "bold white on green"
         action_symbol = "[OK] PROCEED (112ms Fast-Path)"
@@ -137,10 +135,15 @@ async def run_scenario_visual(engine: ChaosEngine, scenario: ChaosScenario) -> N
         action_style = "bold black on yellow"
         action_symbol = "[WARN] CONFIRM (Human-in-the-Loop Required)"
         border_col = "yellow"
+    elif action == "Guide":
+        action_style = "bold black on cyan"
+        action_symbol = "[GUIDE] STEERED (Parameter Drift Refinement)"
+        border_col = "cyan"
     else:
         action_style = "bold white on red"
         action_symbol = "[BLOCKED] DENIED (Destructive / Ungrounded)"
         border_col = "red"
+
 
     verdict_table = Table(box=box.ASCII, expand=True)
     verdict_table.add_column("Decider 2B Question Head", style="bold cyan")

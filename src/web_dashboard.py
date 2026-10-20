@@ -199,6 +199,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 
     .verdict-proceed { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); }
     .verdict-confirm { background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .verdict-guide { background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); }
     .verdict-deny { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); }
 
     .verdict-header {
@@ -217,7 +218,9 @@ HTML_CONTENT = """<!DOCTYPE html>
     }
     .pill-proceed { background: var(--accent-green); color: black; }
     .pill-confirm { background: var(--accent-yellow); color: black; }
+    .pill-guide { background: #38bdf8; color: black; }
     .pill-deny { background: var(--accent-red); color: white; }
+
 
     .latency-counter {
       font-family: 'JetBrains Mono', monospace;
@@ -317,6 +320,14 @@ HTML_CONTENT = """<!DOCTYPE html>
             <span class="btn-badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">CONFIRM</span>
           </div>
           <p class="btn-desc">High blast-radius termination requiring operator sign-off (HITL).</p>
+        </button>
+
+        <button class="scenario-btn" onclick="runScenario('SCEN-04')">
+          <div class="btn-top">
+            <span class="btn-title">Scenario 4: Parameter Drift Steer</span>
+            <span class="btn-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">GUIDE</span>
+          </div>
+          <p class="btn-desc">Slight argument drift detected. System-1 returns Guide feedback.</p>
         </button>
 
         <!-- Verdict Display -->
@@ -436,6 +447,9 @@ HTML_CONTENT = """<!DOCTYPE html>
       } else if (data.action_taken === 'Confirm') {
         box.classList.add('verdict-confirm');
         pill.className = 'action-pill pill-confirm';
+      } else if (data.action_taken === 'Guide') {
+        box.classList.add('verdict-guide');
+        pill.className = 'action-pill pill-guide';
       } else {
         box.classList.add('verdict-deny');
         pill.className = 'action-pill pill-deny';
@@ -445,10 +459,11 @@ HTML_CONTENT = """<!DOCTYPE html>
       const tbody = document.getElementById('telemetry-tbody');
       const tr = document.createElement('tr');
       const now = new Date().toLocaleTimeString();
+      const color = data.action_taken === 'Proceed' ? '#10b981' : (data.action_taken === 'Confirm' ? '#f59e0b' : (data.action_taken === 'Guide' ? '#38bdf8' : '#ef4444'));
       tr.innerHTML = `
         <td style="color: var(--text-muted);">${now}</td>
         <td>${data.proposed_tool}</td>
-        <td><span style="font-weight: bold; color: ${data.action_taken === 'Proceed' ? '#10b981' : (data.action_taken === 'Confirm' ? '#f59e0b' : '#ef4444')}">[${data.action_taken.toUpperCase()}]</span></td>
+        <td><span style="font-weight: bold; color: ${color};">[${data.action_taken.toUpperCase()}]</span></td>
         <td>${data.latency_ms.toFixed(1)} ms</td>
         <td>${data.grounding_score.toFixed(2)}</td>
       `;

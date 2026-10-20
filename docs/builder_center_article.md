@@ -138,6 +138,8 @@ Demonstrating dual-pattern synergy (`#model-routing`), Decider 2B routes incomin
 
 ## 6. Measured Improvements: Latency & Cost Benchmarks
 
+![Benchmark Comparison](benchmark_chart.svg)
+
 We measured the performance of Vigil-AWS across 50 realistic operational incidents (diagnostic reads, safe restarts, hallucinated parameters, and adversarial prompt injections):
 
 | Metric | Bedrock Claude 3.5 Sonnet Self-Check | Bedrock Haiku 3.5 Self-Check | **Strands Decider 2B (Ours)** | Improvement Factor |

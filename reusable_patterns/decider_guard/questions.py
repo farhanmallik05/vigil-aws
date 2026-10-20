@@ -31,6 +31,15 @@ class DeciderQuestion:
     instructions: str
     options: Optional[List[str]] = None
 
+    def __post_init__(self) -> None:
+        valid_types = {"noul", "choice", "score"}
+        if self.question_type not in valid_types:
+            raise ValueError(
+                f"Invalid question_type '{self.question_type}'. Must be one of {valid_types}."
+            )
+        if self.question_type == "choice" and (not self.options or len(self.options) < 2):
+            raise ValueError("Choice questions require at least two options.")
+
     def to_api_payload(self) -> Dict[str, Any]:
         """Convert question specification to Strands Decider HTTP API format."""
         payload: Dict[str, Any] = {
@@ -42,22 +51,36 @@ class DeciderQuestion:
         return payload
 
 
-def make_grounding_question(tool_name: str, args: Dict[str, Any], user_prompt: str) -> DeciderQuestion:
+def _safe_serialize_args(args: Any, max_chars: int = 3000) -> str:
+    """Safely serializes arguments into JSON string with length guards."""
+    if args is None:
+        return "{}"
+    if not isinstance(args, dict):
+        args = {"value": args}
+    try:
+        s = json.dumps(args, default=str, sort_keys=True)
+    except Exception:
+        s = str(args)
+    return s[:max_chars] if len(s) > max_chars else s
+
+
+def make_grounding_question(tool_name: str, args: Any, user_prompt: str) -> DeciderQuestion:
     """Constructs a `noul` question checking parameter grounding against operator intent."""
-    args_json = json.dumps(args, default=str, sort_keys=True)
+    clean_prompt = (user_prompt or "").strip()[:2000]
+    args_json = _safe_serialize_args(args)
     return DeciderQuestion(
         question_id="is_grounded",
         question_type="noul",
         instructions=(
             f"Is the proposed tool call '{tool_name}' with parameters {args_json} "
-            f"strictly grounded in, justified by, and relevant to the operator request: '{user_prompt}'?"
+            f"strictly grounded in, justified by, and relevant to the operator request: '{clean_prompt}'?"
         ),
     )
 
 
-def make_blast_radius_question(tool_name: str, args: Dict[str, Any]) -> DeciderQuestion:
+def make_blast_radius_question(tool_name: str, args: Any) -> DeciderQuestion:
     """Constructs a `choice` question categorizing operational blast radius."""
-    args_json = json.dumps(args, default=str, sort_keys=True)
+    args_json = _safe_serialize_args(args)
     return DeciderQuestion(
         question_id="blast_radius",
         question_type="choice",
@@ -74,9 +97,9 @@ def make_blast_radius_question(tool_name: str, args: Dict[str, Any]) -> DeciderQ
     )
 
 
-def make_injection_check_question(tool_name: str, args: Dict[str, Any]) -> DeciderQuestion:
+def make_injection_check_question(tool_name: str, args: Any) -> DeciderQuestion:
     """Constructs a `noul` question checking for adversarial prompt injection or payload tampering."""
-    args_json = json.dumps(args, default=str, sort_keys=True)
+    args_json = _safe_serialize_args(args)
     return DeciderQuestion(
         question_id="is_adversarial",
         question_type="noul",
